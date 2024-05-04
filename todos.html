@@ -1,0 +1,9 @@
+{{range .}}
+    <div>
+        <span>{{.Title}}</span>
+        <form hx-post="/delete-todo" hx-target="#todo-list">
+            <input type="hidden" name="id" value="{{.ID}}">
+            <button type="submit">Delete</button>
+        </form>
+    </div>
+{{end}}
