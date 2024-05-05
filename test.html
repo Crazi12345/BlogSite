@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+   <head>
+        <link rel="stylesheet" href="prism.css" />
+<script src="prism.js"></script>
+      <style>
+         .column {
+            float: left;
+            width: 33.33%;
+            padding: 10px;
+            box-sizing: border-box;
+         }
+         .row::after {
+            content: "";
+            clear: both;
+            display: table;
+         }
+        .top-bar {
+      background-color: #333; /* Example color */
+      color: white;          /* Example color */
+      padding: 1px;
+      text-align: center;
+      position: fixed;       /* Make it stay at the top */
+      top: 0;
+      left: 0;
+      width: 100%;           /* Full width */
+      z-index: 100;          /* Ensure it's on top of other content */
+    }
+
+    /* Adjust main content to make room for the top bar */
+    .content {
+      margin-top: 60px;  /* Adjust as needed based on the height of your top bar */
+    }
+      </style>
+   </head>
+   <body>
+        <div class="top-bar">
+    <h1>My Blog Website</h1>
+    </div>
+
+  <div class="content">
+    <div class="row">
+      </div>
+  </div>
+      <div class="row">
+         <div class="column">
+            <h2>Column 1</h2>
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam in enim vel justo convallis luctus a quis nisi.</p>
+         </div>
+         <div class="column">
+    <div>
+        <span>{{.Content}}</span>
+    </div>
+         </div>
+         <div class="column">
+            <h2>Column 3</h2>
+            <p>Suspendisse et ligula convallis, hendrerit turpis vitae, placerat nunc. Sed convallis metus varius urna viverra eleifend.</p>
+         </div>
+      </div>
+   </body>
+</html>
