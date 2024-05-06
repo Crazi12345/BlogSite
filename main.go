@@ -9,7 +9,6 @@ import (
 	"github.com/gomarkdown/markdown/parser"
     "io/fs"
 	"os"
-    "fmt"
 )
 
 type Page struct {
@@ -37,17 +36,18 @@ func mdToHTML(md []byte) []byte {
 }
 func main() {
 
-    mds,_  := fs.ReadFile(os.DirFS("/home/tired_atlas/Documents/Main Brain"), "Laravel.md")
+    mds,_  := fs.ReadFile(os.DirFS("Blogposts/Blog/"), "TESTER.md")
     md := []byte(mds)
 	html := mdToHTML(md)
 
-    fmt.Println(string(html))
     pages := Page{
         ID: 1,
        Content: template.HTML(string(html)),
     }
 	http.HandleFunc("/todos", func(w http.ResponseWriter, r *http.Request) {
 		tmpl, err := template.ParseFiles("test.html")
+
+
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
