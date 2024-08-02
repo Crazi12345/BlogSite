@@ -2,18 +2,21 @@ package main
 
 import (
 	"html/template"
+	"io/fs"
 	"log"
 	"net/http"
+	"os"
+	"strings"
+
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/html"
 	"github.com/gomarkdown/markdown/parser"
-    "io/fs"
-	"os"
 )
 
 type Page struct {
-    ID int
-    Content template.HTML
+	ID      int
+	Title   string
+	Content template.HTML
 }
 type Todo struct {
 	ID    int
@@ -21,7 +24,7 @@ type Todo struct {
 	Done  bool
 }
 
-func mdToHTML(md []byte) []byte {
+func mdToHTML(md []byte) template.HTML {
 	// create markdown parser with extensions
 	extensions := parser.CommonExtensions | parser.AutoHeadingIDs | parser.NoEmptyLineBeforeBlock
 	p := parser.NewWithExtensions(extensions)
@@ -31,33 +34,54 @@ func mdToHTML(md []byte) []byte {
 	htmlFlags := html.CommonFlags | html.HrefTargetBlank
 	opts := html.RendererOptions{Flags: htmlFlags}
 	renderer := html.NewRenderer(opts)
+     htmlString := string(markdown.Render(doc, renderer))
 
-	return markdown.Render(doc, renderer)
+    // Replace "public/" with "static/" in the HTML
+    htmlString = strings.ReplaceAll(htmlString, "public/", "static/")
+
+
+    return template.HTML(htmlString)
 }
 func main() {
 
-    mds,_  := fs.ReadFile(os.DirFS("Blogposts/Blog/"), "TESTER.md")
-    md := []byte(mds)
-	html := mdToHTML(md)
-
-    pages := Page{
-        ID: 1,
-       Content: template.HTML(string(html)),
-    }
-	http.HandleFunc("/todos", func(w http.ResponseWriter, r *http.Request) {
-		tmpl, err := template.ParseFiles("test.html")
-
-
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("Blog/public"))))
+	var pages []Page
+	err := fs.WalkDir(os.DirFS("Blog/Posts"), ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			return err
 		}
-        w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		if !d.IsDir() && strings.HasSuffix(d.Name(), ".md") {
+			mds, err := fs.ReadFile(os.DirFS("Blog/Posts"), path)
 
-        // Directly write HTML output
+			if err != nil {
+				return err
+			}
+			htmlContent := mdToHTML(mds)
 
-		tmpl.Execute(w, pages)
+			// Create a new page
+			page := Page{
+				ID:      len(pages) + 1,
+				Title:   strings.TrimSuffix(d.Name(), ".md"), // Extract title from filename
+				Content: template.HTML(htmlContent),
+			}
+			pages = append(pages, page)
+
+			// Create a unique route for each page
+			http.HandleFunc("/"+page.Title, func(w http.ResponseWriter, r *http.Request) {
+				tmpl, err := template.ParseFiles("test.html") // Use your template file
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+				tmpl.Execute(w, page) // Pass the individual page to the template
+			})
+
+		}
+		return nil
 	})
+	if err != nil {
+		log.Fatal(err)
+	}
 	log.Println("Starting server on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
